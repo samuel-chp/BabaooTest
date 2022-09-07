@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8660e6fba65f44745b26b5ff7f00919e, type: 3}
   m_Name: IOSSprites
   m_EditorClassIdentifier: 
-  name: IOS
+  containerName: IOS
   sprites:
   - {fileID: 21300000, guid: 7be893626981643c2be0d4062e509000, type: 3}
   - {fileID: 21300000, guid: d1b3a22d1e5634869a5536f954c97a18, type: 3}
