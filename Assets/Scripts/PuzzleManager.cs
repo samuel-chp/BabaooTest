@@ -50,7 +50,7 @@ public class PuzzleManager : MonoBehaviour
             case RuntimePlatform.Android:
                 foreach (PuzzleSpriteContainer container in puzzleSpritesContainers)
                 {
-                    if (container.name == "Android")
+                    if (container.containerName == "Android")
                     {
                         orderedPuzzleSprites = container.sprites;
                         break;
@@ -60,7 +60,7 @@ public class PuzzleManager : MonoBehaviour
             case RuntimePlatform.IPhonePlayer:
                 foreach (PuzzleSpriteContainer container in puzzleSpritesContainers)
                 {
-                    if (container.name == "IOS")
+                    if (container.containerName == "IOS")
                     {
                         orderedPuzzleSprites = container.sprites;
                         break;

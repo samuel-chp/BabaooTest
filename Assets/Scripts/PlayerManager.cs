@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,10 +12,35 @@ public class PlayerManager : MonoBehaviour
     private Vector2 _mousePosition;
     private Tile _selectedTile;
     private Vector2 _mouseToTileDelta;
-    
+
+    private InputMappings _touchControls;
+
+    private void Awake()
+    {
+        _touchControls = new InputMappings();
+    }
+
+    private void OnEnable()
+    {
+        _touchControls.Enable();
+    }
+
+    private void OnDisable()
+    {
+        _touchControls.Disable();
+    }
+
+    private void Start()
+    {
+        _touchControls.Player.Select.started += SelectTile;
+        _touchControls.Player.Select.canceled += SelectTile;
+        _touchControls.Player.Move.performed += MoveTile;
+    }
 
     public void SelectTile(InputAction.CallbackContext context)
     {
+        _mousePosition = _touchControls.Player.Move.ReadValue<Vector2>();
+        
         if (context.started)
         {
             RaycastHit2D hit = Physics2D.GetRayIntersection(cam.ScreenPointToRay(_mousePosition));

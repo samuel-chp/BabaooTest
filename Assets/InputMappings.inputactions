@@ -1,5 +1,5 @@
 {
-    "name": "InputMapping",
+    "name": "InputMappings",
     "maps": [
         {
             "name": "Player",
@@ -8,26 +8,37 @@
                 {
                     "name": "Select",
                     "type": "Button",
-                    "id": "ce3cb3dd-4b51-40c8-ad64-b4733463d5e2",
+                    "id": "f215ceb5-ebfd-45df-8658-1932957631dd",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": "",
+                    "interactions": "Press(behavior=2)",
                     "initialStateCheck": false
                 },
                 {
                     "name": "Move",
-                    "type": "Value",
-                    "id": "db58cfa1-a233-463d-b11a-eb6166eaceb5",
+                    "type": "PassThrough",
+                    "id": "29dc40ef-33fe-4c7f-892e-d0102df9595d",
                     "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
-                    "initialStateCheck": true
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
                 {
                     "name": "",
-                    "id": "c0300c0c-4e96-44ab-ab6a-3218c307f882",
+                    "id": "9d2bec60-1353-446f-bea8-6d836f1e3b9f",
+                    "path": "<Touchscreen>/primaryTouch/press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Touch",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3d980622-6f08-41ef-878e-18a0e29689c4",
                     "path": "<Mouse>/press",
                     "interactions": "",
                     "processors": "",
@@ -38,33 +49,22 @@
                 },
                 {
                     "name": "",
-                    "id": "5b8c574a-bfce-4c33-804f-5d9ff0fcf6f6",
-                    "path": "<Touchscreen>/Press",
+                    "id": "386a818e-5e31-4a40-a258-8881f829b9a2",
+                    "path": "<Touchscreen>/primaryTouch/position",
                     "interactions": "",
                     "processors": "",
                     "groups": "Touch",
-                    "action": "Select",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "80c8cceb-e16a-4a6a-a9f5-4765b5dbc05a",
-                    "path": "<Mouse>/position",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
                     "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "36678ecf-52fe-4c71-96b4-92a0f7cb55ac",
-                    "path": "<Touchscreen>/position",
+                    "id": "d2630fd3-424c-4700-b252-9f49a19fe71c",
+                    "path": "<Mouse>/position",
                     "interactions": "",
                     "processors": "",
-                    "groups": "Touch",
+                    "groups": "Keyboard&Mouse",
                     "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": false
