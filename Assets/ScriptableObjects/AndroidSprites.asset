@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8660e6fba65f44745b26b5ff7f00919e, type: 3}
+  m_Name: AndroidSprites
+  m_EditorClassIdentifier: 
+  name: Android
+  sprites:
+  - {fileID: 21300000, guid: fef1c957e48ee451db51d6f5d3af180d, type: 3}
+  - {fileID: 21300000, guid: 5c4dfe0138dc14ed0b2b1c94ffe410a8, type: 3}
+  - {fileID: 21300000, guid: 3c435d4b5a1b9442fa8cf8a52b56ceba, type: 3}
+  - {fileID: 21300000, guid: d276b514f8a324c1fa96cc06268cb53e, type: 3}
+  - {fileID: 21300000, guid: de8e80f46f9704ea58062706e67dea5d, type: 3}
+  - {fileID: 21300000, guid: f2ee0df2fada8493abc9b8968bf1ae37, type: 3}
+  - {fileID: 21300000, guid: e799ff62b8ed449ebb698d1b73d78f40, type: 3}
+  - {fileID: 21300000, guid: b0fd7550b6f634af7917925d6a450bde, type: 3}
+  - {fileID: 21300000, guid: 78ae05deb675c434ab1956eeacf3ef32, type: 3}
