@@ -270,7 +270,7 @@ public class PuzzleManager : MonoBehaviour
         
         // Save score
         Timer timer = FindObjectOfType<Timer>();
-        GameManager.Instance.SaveScore(timer.RemainingTime);
+        GameManager.Instance.SaveScore(timer.ElapsedTime);
         
         // Disable Timer
         timer.gameObject.SetActive(false);

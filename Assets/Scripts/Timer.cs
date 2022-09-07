@@ -17,6 +17,8 @@ public class Timer : MonoBehaviour
     
     public float RemainingTime => MaxGameDuration - _elapsedTime;
 
+    public float ElapsedTime => _elapsedTime;
+
     private void Awake()
     {
         _tweener = GetComponent<Tweener>();
