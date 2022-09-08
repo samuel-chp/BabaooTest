@@ -42,6 +42,7 @@ public class GameManager : MonoBehaviour
 
     public void SaveScore(float score)
     {
-        scoreHolder.bestScore = score;
+        if (score < scoreHolder.bestScore)
+            scoreHolder.bestScore = score;
     }
 }
