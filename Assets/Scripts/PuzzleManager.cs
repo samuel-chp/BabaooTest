@@ -4,312 +4,164 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-/// <summary>
-/// Main class for handling puzzle related actions.
-/// </summary>
 public class PuzzleManager : MonoBehaviour
 {
-    public bool debug = true;
-    
-    [SerializeField] private Tile tilePrefab;
-    [SerializeField] private float tileSize = 5.12f;
-    [SerializeField] private float tileStep = 0.1f;
-    [SerializeField] private Transform tileHolder;
-    
-    [SerializeField] private PuzzleSpriteContainer[] puzzleSpritesContainers;
-    [SerializeField] [Tooltip("Final complete image of the puzzle.")] private GameObject resultImage;
-    [SerializeField] [Tooltip("Game over text UI.")] private GameObject loseObject;
+    [Header("Components")]
+    [SerializeField] private GameObject tilePrefab;
+    [SerializeField] private Board board;
 
-    // Private
-    private Sprite[] orderedPuzzleSprites;
-    private Tile[,] tileGrid = new Tile[3, 3];
+    [Header("Puzzles")]
+    [SerializeField] private PuzzleSprites androidSprites;
+    [SerializeField] private PuzzleSprites iosSprites;
 
-    // Properties
-    /// <summary>
-    /// Position of the current free tile.
-    /// </summary>
-    public Vector2Int FreeTile
-    {
-        get;
-        private set;
-    }
+    private Tile[,] _tileMap = new Tile[3,3];
+    private Tile _emptyTile;
+
+    public Tile EmptyTile => _emptyTile;
+    public Board Board => board;
 
     private void Start()
     {
-        // Select set of sprites depending on platform
-        if (puzzleSpritesContainers.Length < 1)
+        PopulatePuzzle();
+        ShufflePuzzle();
+    }
+
+    [ContextMenu("Populate Puzzle")]
+    public void PopulatePuzzle()
+    {
+        // Remove all tiles
+        EmptyPuzzle();
+        
+        // Instantiate sprites
+        // TODO: handle more sprites
+        int idx = 0;
+        for (int j = 2; j >= 0; j--)
         {
-            Debug.LogError("Missing puzzle sprites.");
-            Application.Quit();
-        }
-        switch (Application.platform)
-        {
-            default:
-                orderedPuzzleSprites = puzzleSpritesContainers[0].sprites;
-                break;
-            case RuntimePlatform.Android:
-                foreach (PuzzleSpriteContainer container in puzzleSpritesContainers)
-                {
-                    if (container.containerName == "Android")
-                    {
-                        orderedPuzzleSprites = container.sprites;
-                        break;
-                    }
-                }
-                break;
-            case RuntimePlatform.IPhonePlayer:
-                foreach (PuzzleSpriteContainer container in puzzleSpritesContainers)
-                {
-                    if (container.containerName == "IOS")
-                    {
-                        orderedPuzzleSprites = container.sprites;
-                        break;
-                    }
-                }
-                break;
+            for (int i = 0; i <= 2; i++)
+            {
+                GameObject tileGO = Instantiate(
+                    tilePrefab, 
+                    Vector3.zero, 
+                    Quaternion.identity);
+                Tile tile = tileGO.GetComponent<Tile>();
+                
+                tile.transform.name = idx.ToString();
+                tile.position = new Vector2Int(i, j);
+                tile.index = idx;
+                board.AddTile(tile);
+
+                _tileMap[i, j] = tile;
+                
+                idx++;
+            }
         }
 
-        if (orderedPuzzleSprites == null)
+        // Set sprites
+        // TODO: handle wrong puzzle sprites number
+        Sprite[] sprites = GetPuzzleSprites().sprites;
+        idx = 0;
+        for (int j = 2; j >= 0; j--)
         {
-            Debug.LogError("Missing sprites for current platform.");
-            orderedPuzzleSprites = puzzleSpritesContainers[0].sprites;
+            for (int i = 0; i <= 2; i++)
+            {
+                _tileMap[i, j].SetSprite(sprites[idx]);
+                idx++;
+            }
         }
         
-        EmptyGrid();
-        PopulateGrid();
-        RandomizeGrid();
+        // Remove the sprite in the middle (not the tile)
+        _emptyTile = _tileMap[1, 1];
+        _emptyTile.SetSprite(null);
+    }
+
+    [ContextMenu("Empty Puzzle")]
+    public void EmptyPuzzle()
+    {
+        _tileMap = new Tile[3,3];
+        board.Empty();
+    }
+
+    public void SwapTile(Tile tile, bool checkForWin = true)
+    {
+        // Swap transform position
+        board.SetTileLocalPosition(tile, _emptyTile.position);
+        board.SetTileLocalPosition(_emptyTile, tile.position);
+
+        // Swap in list
+        _tileMap[tile.position.x, tile.position.y] = _emptyTile;
+        _tileMap[_emptyTile.position.x, _emptyTile.position.y] = tile;
         
-        // Ensure result image is disabled.
-        resultImage.SetActive(false);
-    }
+        // Update properties
+        (tile.position, _emptyTile.position) = (_emptyTile.position, tile.position);
 
-    /// <summary>
-    /// Remove all tiles from the grid.
-    /// </summary>
-    [ContextMenu("Empty puzzle")]
-    private void EmptyGrid()
-    {
-        for (int i = tileHolder.childCount - 1; i >= 0; i--)
-        {
-            if (Application.isPlaying)
-            {
-                Destroy(tileHolder.GetChild(i).gameObject);
-            }
-            else
-            {
-                DestroyImmediate(tileHolder.GetChild(i).gameObject);
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Instantiate tiles in the grid.
-    /// </summary>
-    [ContextMenu("Populate puzzle")]
-    private void PopulateGrid()
-    {
-        int nRows = 3;
-        int nCols = 3;
-        
-        // Set Positions
-        for (int i = 0; i < nCols; i++)
-        {
-            for (int j = 0; j < nRows; j++)
-            {
-                // Vector3 position = new Vector3(i * (tileSize + tileStep), -j * (tileSize + tileStep), 0f);
-                Vector2 position = GetGridToWorldPosition(new Vector2Int(i, j));
-                tileGrid[i, j] = Instantiate(
-                    tilePrefab,
-                    position,
-                    Quaternion.identity,
-                    tileHolder);
-                tileGrid[i, j].GridPosition = new Vector2Int(i, j);
-            }
-        }
-
-        // Set Sprite
-        for (int j = 0; j < nRows; j++)
-        {
-            for (int i = 0; i < nCols; i++)
-            {
-                tileGrid[i, j].SetSprite(orderedPuzzleSprites[j*nRows + i]);
-                tileGrid[i, j].GridIndex = j * nRows + i;
-            }
-        }
-
-        // Remove the tile in the center
-        if (Application.isPlaying)
-        {
-            Destroy(tileGrid[1, 1].gameObject);
-        }
-        else
-        {
-            DestroyImmediate(tileGrid[1, 1].gameObject);
-        }
-        FreeTile = Vector2Int.one;
-    }
-
-    /// <summary>
-    /// Perform a random number of permutations of tiles to get a solvable puzzle.
-    /// </summary>
-    private void RandomizeGrid()
-    {
-        // TODO: improve this algorithm
-        int n = debug ? 1 : Random.Range(100, 10000);
-        for (int i = 0; i < n; i++)
-        {
-            // Get a random adjacent tile to the FreeTile
-            List<Vector2Int> adjacentGridPos = new List<Vector2Int>();
-            if (FreeTile.x >= 1)
-            {
-                adjacentGridPos.Add(new Vector2Int(FreeTile.x - 1, FreeTile.y));
-            }
-            if (FreeTile.x <= 1)
-            {
-                adjacentGridPos.Add(new Vector2Int(FreeTile.x + 1, FreeTile.y));
-            }
-            if (FreeTile.y >= 1)
-            {
-                adjacentGridPos.Add(new Vector2Int(FreeTile.x, FreeTile.y - 1));
-            }
-            if (FreeTile.y <= 1)
-            {
-                adjacentGridPos.Add(new Vector2Int(FreeTile.x, FreeTile.y + 1));
-            }
-            Vector2Int _selectedTilePosition = adjacentGridPos[Random.Range(0, adjacentGridPos.Count)];
-            if (_selectedTilePosition != FreeTile && (FreeTile - _selectedTilePosition).magnitude < 1.01f)
-            {
-                SwapTile(tileGrid[_selectedTilePosition.x, _selectedTilePosition.y], false);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Check if the puzzle is completed.
-    /// If true, trigger win.
-    /// </summary>
-    private void CheckForCompletion()
-    {
+        // Check if puzzle finished
         bool win = true;
-        int n = 0;
-        for (int j = 0; j < 3; j++)
+        int idx = 0;
+        for (int j = 2; j >= 0; j--)
         {
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i <= 2; i++)
             {
-                // Check if all tiles are in order
-                if (tileGrid[i, j] != null && tileGrid[i, j].GridIndex != n)
+                if (_tileMap[i, j].index != idx)
                 {
                     win = false;
                     break;
                 }
-                n++;
+
+                idx++;
             }
         }
 
-        if (win)
+        // TODO: add win
+        if (win && checkForWin)
         {
-            // Debug.Log("Win!");
-            StartCoroutine(Win());
+            Debug.Log("You won!");
         }
     }
 
     /// <summary>
-    /// Exchange the tileToSwap with the current FreeTile.
-    /// Careful: remember to check if the swap is possible before calling this.
+    /// Return the targeted PuzzleSprites object.
     /// </summary>
-    /// <param name="tileToSwap"></param>
-    /// <param name="check"></param>
-    public void SwapTile(Tile tileToSwap, bool check = true)
-    {
-        (tileToSwap.GridPosition, FreeTile) = (FreeTile, tileToSwap.GridPosition);
-        tileToSwap.transform.position = GetGridToWorldPosition(tileToSwap.GridPosition);
-        tileGrid[tileToSwap.GridPosition.x, tileToSwap.GridPosition.y] = tileToSwap;
-        tileGrid[FreeTile.x, FreeTile.y] = null;
-        if (check) CheckForCompletion();
-    }
-
-    /// <summary>
-    /// Get the world position of a tile given its grid coordinates.
-    /// </summary>
-    /// <param name="gridPosition"></param>
     /// <returns></returns>
-    public Vector2 GetGridToWorldPosition(Vector2Int gridPosition)
+    private PuzzleSprites GetPuzzleSprites()
     {
-        Vector2 position = new Vector2(
-            gridPosition.x * (tileSize + tileStep),
-            -gridPosition.y * (tileSize + tileStep));
-        position -= new Vector2(tileSize + tileStep, -(tileSize + tileStep));
-        position.Scale(transform.localScale);
-        return (Vector2)tileHolder.position + position;
+        // TODO: handle empty object
+        switch (Application.platform)
+        {
+            default:
+                return androidSprites;
+            case RuntimePlatform.Android:
+                return androidSprites;
+            case RuntimePlatform.IPhonePlayer:
+                return iosSprites;
+        }
     }
 
-    /// <summary>
-    /// Refresh all tiles world position.
-    /// Useful when re-scaling the puzzle.
-    /// </summary>
-    public void RefreshGrid()
+    [ContextMenu("Shuffle Puzzle")]
+    private void ShufflePuzzle()
     {
-        for (int j = 0; j < 3; j++)
+        for (int i = 0; i < 1; i++)
         {
-            for (int i = 0; i < 3; i++)
+            List<Tile> candidates = new List<Tile>();
+
+            if (_emptyTile.position.x > 0)
             {
-                if (tileGrid[i, j] != null) 
-                    tileGrid[i, j].transform.position = GetGridToWorldPosition(tileGrid[i, j].GridPosition);
+                candidates.Add(_tileMap[_emptyTile.position.x - 1, _emptyTile.position.y]);
             }
+            if (_emptyTile.position.x < 2)
+            {
+                candidates.Add(_tileMap[_emptyTile.position.x + 1, _emptyTile.position.y]);
+            }
+            if (_emptyTile.position.y > 0)
+            {
+                candidates.Add(_tileMap[_emptyTile.position.x, _emptyTile.position.y - 1]);
+            }
+            if (_emptyTile.position.y < 2)
+            {
+                candidates.Add(_tileMap[_emptyTile.position.x, _emptyTile.position.y + 1]);
+            }
+
+            Tile rndTile = candidates[Random.Range(0, candidates.Count)];
+            SwapTile(rndTile, false);
         }
-    }
-
-    /// <summary>
-    /// Win events such as showing the completed puzzle, animations and going back to main menu.
-    /// </summary>
-    /// <returns></returns>
-    public IEnumerator Win()
-    {
-        // Disable player inputs
-        FindObjectOfType<PlayerManager>().gameObject.SetActive(false);
-        
-        // Save score
-        Timer timer = FindObjectOfType<Timer>();
-        GameManager.Instance.SaveScore(timer.ElapsedTime);
-        
-        // Disable Timer
-        timer.gameObject.SetActive(false);
-        
-        Vector3 position = GetGridToWorldPosition(Vector2Int.one);
-        tileGrid[1, 1] = Instantiate(
-            tilePrefab,
-            position,
-            Quaternion.identity,
-            transform);
-        tileGrid[1, 1].SetSprite(orderedPuzzleSprites[4]);
-        yield return new WaitForSeconds(1f);
-        
-        EmptyGrid();
-        
-        resultImage.SetActive(true);
-    }
-
-    /// <summary>
-    /// Lose events such as showing the losing text.
-    /// </summary>
-    /// <returns></returns>
-    public IEnumerator Lose()
-    {
-        // Disable player inputs
-        FindObjectOfType<PlayerManager>().gameObject.SetActive(false);
-        
-        // Disable Timer
-        FindObjectOfType<Timer>().gameObject.SetActive(false);
-        
-        loseObject.SetActive(true);
-        
-        yield return new WaitForSeconds(5f);
-        
-        ExitGame();
-    }
-
-    public void ExitGame()
-    {
-        GameManager.Instance.GoToMainMenu();
     }
 }
