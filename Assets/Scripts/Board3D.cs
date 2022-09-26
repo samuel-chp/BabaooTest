@@ -22,7 +22,6 @@ public class Board3D : Board
             tileCopy.SetSprite(tile.GetSprite());
 
             AddTile(tileCopy);
-            tileCopy.transform.localRotation = Quaternion.Euler(0f, 0f, 180f);
         }
     }
 }
