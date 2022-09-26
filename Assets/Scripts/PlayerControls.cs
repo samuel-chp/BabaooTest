@@ -8,10 +8,35 @@ public class PlayerControls : MonoBehaviour
 {
     [SerializeField] private PuzzleManager puzzleManager;
     [SerializeField] private Camera activeCamera;
-    
+
     private PlayerPuzzleActions _actions;
     private Tile _selectedTile;
     private Vector3 _deltaPos;
+
+    private Vector3 CursorWorldPos
+    {
+        get
+        {
+            Vector2 cursorPos = _actions.Game.Move.ReadValue<Vector2>();
+            
+            // Translate in world pos
+            Vector3 cursorWorldPos = cursorPos;
+            if (!activeCamera.orthographic)
+            {
+                if (_selectedTile == null)
+                {
+                    cursorWorldPos.z = Mathf.Clamp(puzzleManager.MainBoard.transform.position.z - activeCamera.transform.position.z, 0f, 1000f);
+                }
+                else
+                {
+                    cursorWorldPos.z = Mathf.Clamp(_selectedTile.transform.position.z - activeCamera.transform.position.z, 0f, 1000f);
+                }
+            }
+            
+            cursorWorldPos = activeCamera.ScreenToWorldPoint(cursorWorldPos);
+            return cursorWorldPos;
+        }
+    }
 
     private void Awake()
     {
@@ -38,17 +63,23 @@ public class PlayerControls : MonoBehaviour
     {
         if (_actions.Game.Select.IsPressed())
         {
-            // Raycast under cursor for tiles
-            Vector2 cursorPos = _actions.Game.Move.ReadValue<Vector2>();
-            RaycastHit2D hit = Physics2D.Raycast(activeCamera.ScreenToWorldPoint(cursorPos), Vector2.zero);
+            // RaycastHit2D hit = Physics2D.Raycast(activeCamera.ScreenToWorldPoint(cursorPos), Vector2.zero);
+            RaycastHit hit;
+            Ray ray = new Ray(activeCamera.transform.position,
+                (CursorWorldPos - activeCamera.transform.position).normalized);
+            Physics.Raycast(ray, out hit, 100f);
+
             if (hit.collider != null)
             {
                 Tile tile = hit.collider.GetComponent<Tile>();
-                if (tile != null && Vector2Int.Distance(tile.position, puzzleManager.EmptyTile.position) <= 1.01f)
+                if (tile != null && puzzleManager.MainBoard.GetTileAtPosition(tile.position) == tile) // Select only from main board
                 {
                     // If the empty tile is a neighbor
-                    _selectedTile = tile;
-                    _deltaPos = activeCamera.ScreenToWorldPoint(cursorPos) - _selectedTile.transform.position;
+                    if (Vector2Int.Distance(tile.position, puzzleManager.EmptyTilePosition) <= 1.01f)
+                    {
+                        _selectedTile = tile;
+                        _deltaPos = CursorWorldPos - _selectedTile.transform.position;
+                    }
                 }
             }
         }
@@ -58,15 +89,15 @@ public class PlayerControls : MonoBehaviour
             {
                 // Release tile to the nearest position
                 Vector2 boardPos =
-                    puzzleManager.Board.GetBoardPositionFromWorldPosition(_selectedTile.transform.position);
-                if (Vector2.Distance(puzzleManager.EmptyTile.position, boardPos) <
+                    puzzleManager.MainBoard.GetBoardPositionFromWorldPosition(_selectedTile.transform.position);
+                if (Vector2.Distance(puzzleManager.EmptyTilePosition, boardPos) <
                     Vector2.Distance(_selectedTile.position, boardPos))
                 {
-                    puzzleManager.SwapTile(_selectedTile);
+                    puzzleManager.MoveTile(_selectedTile);
                 }
                 else
                 {
-                    puzzleManager.Board.SetTileLocalPosition(_selectedTile, _selectedTile.position);
+                    puzzleManager.MainBoard.SetTilePosition(_selectedTile, _selectedTile.position);
                 }
             }
             
@@ -78,23 +109,21 @@ public class PlayerControls : MonoBehaviour
     {
         if (_selectedTile != null)
         {
-            Vector2 cursorPos = _actions.Game.Move.ReadValue<Vector2>(); // Screen coords
-            cursorPos = activeCamera.ScreenToWorldPoint(cursorPos); // World coords
-            cursorPos = puzzleManager.Board.GetBoardPositionFromWorldPosition((Vector3)cursorPos - _deltaPos); // Board coords
+            Vector2 cursorPos = puzzleManager.MainBoard.GetBoardPositionFromWorldPosition(CursorWorldPos - _deltaPos); // Board coords
 
             // Movement in only one direction
-            Vector2 normal =  puzzleManager.EmptyTile.position - _selectedTile.position;
+            Vector2 normal =  puzzleManager.EmptyTilePosition - _selectedTile.position;
             Vector2 newPos = 
                 Vector2.Dot(cursorPos - _selectedTile.position, normal) * normal;
             newPos += _selectedTile.position;
             
             // Clamp position
             Vector2 tilePos = _selectedTile.position;
-            Vector2 emptyPos = puzzleManager.EmptyTile.position;
+            Vector2 emptyPos = puzzleManager.EmptyTilePosition;
             newPos.x = Mathf.Clamp(newPos.x, Mathf.Min(tilePos.x, emptyPos.x), Mathf.Max(tilePos.x, emptyPos.x));
             newPos.y = Mathf.Clamp(newPos.y, Mathf.Min(tilePos.y, emptyPos.y), Mathf.Max(tilePos.y, emptyPos.y));
 
-            puzzleManager.Board.SetTileLocalPosition(_selectedTile, newPos);
+            puzzleManager.MainBoard.SetTilePosition(_selectedTile, newPos);
         }
     }
 }
