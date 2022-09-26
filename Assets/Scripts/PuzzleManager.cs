@@ -10,6 +10,7 @@ public class PuzzleManager : MonoBehaviour
     [SerializeField] private GameObject tilePrefab;
     [SerializeField] private Board mainBoard;
     [SerializeField] private Board[] otherBoards;
+    [SerializeField] private Timer timer;
 
     [Header("Parameters")] 
     [SerializeField] private int shuffleIterations = 1000;
@@ -95,7 +96,12 @@ public class PuzzleManager : MonoBehaviour
         {
             board.SwapTile(tilePos, emptyTilePos);
         }
+        
+        if (checkForWin) CheckForWin();
+    }
 
+    private void CheckForWin()
+    {
         // Check if puzzle finished
         bool win = true;
         int idx = 0;
@@ -115,10 +121,37 @@ public class PuzzleManager : MonoBehaviour
         }
 
         // TODO: add win
-        if (win && checkForWin)
+        if (win)
         {
-            Debug.Log("You won!");
+            Win();
         }
+    }
+
+    public void Win()
+    {
+        StartCoroutine(WinProcess());
+    }
+    
+    public void Lose()
+    {
+        StartCoroutine(LoseProcess());
+    }
+
+    IEnumerator WinProcess()
+    {
+        Debug.Log("You won!");
+            
+        GameManager.Instance.SaveBestScore(timer.GetScore());
+        GameManager.Instance.GoToMainMenu();
+        yield return 0;
+    }
+
+    IEnumerator LoseProcess()
+    {
+        Debug.Log("You lose!");
+        
+        GameManager.Instance.GoToMainMenu();
+        yield return 0;
     }
 
     /// <summary>
