@@ -53,9 +53,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR
     [MenuItem("Tools/GameManager/ResetScore")]
     public static void ResetBestScore()
     {
         PlayerPrefs.DeleteKey(BEST_SCORE_KEY);
     }
+#endif
 }
