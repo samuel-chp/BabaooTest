@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,23 +19,23 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Destroy(this);
+            Destroy(gameObject);
         }
         
         DontDestroyOnLoad(gameObject);
     }
 
-    public void GoToGame()
+    public static void GoToGame()
     {
         SceneManager.LoadScene(1);
     }
 
-    public void GoToMainMenu()
+    public static void GoToMainMenu()
     {
         SceneManager.LoadScene(0);
     }
 
-    public void CloseGame()
+    public static void CloseGame()
     {
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
@@ -43,12 +44,18 @@ public class GameManager : MonoBehaviour
 #endif
     }
 
-    public void SaveBestScore(int scoreInSeconds)
+    public static void SaveBestScore(int scoreInSeconds)
     {
         int currentBest = PlayerPrefs.GetInt(BEST_SCORE_KEY, 3600);
         if (scoreInSeconds < currentBest)
         {
             PlayerPrefs.SetInt(BEST_SCORE_KEY, scoreInSeconds);
         }
+    }
+
+    [MenuItem("Tools/GameManager/ResetScore")]
+    public static void ResetBestScore()
+    {
+        PlayerPrefs.DeleteKey(BEST_SCORE_KEY);
     }
 }

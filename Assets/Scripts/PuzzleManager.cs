@@ -2,20 +2,28 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using Random = UnityEngine.Random;
 
 public class PuzzleManager : MonoBehaviour
 {
     [Header("Components")]
     [SerializeField] private GameObject tilePrefab;
+    [SerializeField] private PlayerControls playerControls;
+    
+    [Header("Boards")]
     [SerializeField] private Board mainBoard;
     [SerializeField] private Board[] otherBoards;
+    [SerializeField] private Board boardForEndingAnimation;
+
+    [Header("UI")]
     [SerializeField] private Timer timer;
 
     [Header("Parameters")] 
     [SerializeField] private int shuffleIterations = 1000;
+    [SerializeField] private int timeLimitInSeconds = 180;
     
-    [Header("Puzzles")]
+    [Header("Puzzle Sprites")]
     [SerializeField] private PuzzleSprites androidSprites;
     [SerializeField] private PuzzleSprites iosSprites;
     
@@ -28,6 +36,13 @@ public class PuzzleManager : MonoBehaviour
     {
         PopulatePuzzle();
         ShufflePuzzle();
+        
+        playerControls.puzzleManager = this;
+        playerControls.EnableInputs();
+
+        timer.maxTimeInSeconds = timeLimitInSeconds;
+        timer.ResetTimer();
+        timer.UnpauseTimer();
     }
 
     [ContextMenu("Populate Puzzle")]
@@ -44,18 +59,7 @@ public class PuzzleManager : MonoBehaviour
         {
             for (int i = 0; i <= 2; i++) // From right to left
             {
-                GameObject tileGO = Instantiate(
-                    tilePrefab, 
-                    Vector3.zero, 
-                    Quaternion.identity);
-                Tile tile = tileGO.GetComponent<Tile>();
-                
-                tile.transform.name = idx.ToString();
-                tile.position = new Vector2Int(i, j);
-                tile.index = idx;
-                tile.SetSprite(sprites[idx]);
-                
-                mainBoard.AddTile(tile);
+                mainBoard.AddTile(idx, new Vector2Int(i, j), sprites[idx]);
 
                 idx++;
             }
@@ -129,29 +133,39 @@ public class PuzzleManager : MonoBehaviour
 
     public void Win()
     {
-        StartCoroutine(WinProcess());
+        playerControls.DisableInputs();
+        timer.PauseTimer();
+        GameManager.SaveBestScore(timer.GetScore());
+        StartCoroutine(FinishGame());
+
+        IEnumerator FinishGame()
+        {
+            Debug.Log("You win!");
+            
+            // Replace tile in the middle
+            boardForEndingAnimation.RemoveTile(new Vector2Int(1, 1));
+            boardForEndingAnimation.AddTile(-1, new Vector2Int(1, 1), GetPuzzleSprites().sprites[4]);
+            
+            boardForEndingAnimation.PlayWinAnimation();
+            yield return new WaitForSeconds(5f);
+            GameManager.GoToMainMenu();
+        }
     }
     
     public void Lose()
     {
-        StartCoroutine(LoseProcess());
-    }
-
-    IEnumerator WinProcess()
-    {
-        Debug.Log("You won!");
-            
-        GameManager.Instance.SaveBestScore(timer.GetScore());
-        GameManager.Instance.GoToMainMenu();
-        yield return 0;
-    }
-
-    IEnumerator LoseProcess()
-    {
-        Debug.Log("You lose!");
+        playerControls.DisableInputs();
+        timer.PauseTimer();
+        StartCoroutine(FinishGame());
         
-        GameManager.Instance.GoToMainMenu();
-        yield return 0;
+        IEnumerator FinishGame()
+        {
+            Debug.Log("You lose!");
+
+            boardForEndingAnimation.PlayLoseAnimation();
+            yield return new WaitForSeconds(5f);
+            GameManager.GoToMainMenu();
+        }
     }
 
     /// <summary>

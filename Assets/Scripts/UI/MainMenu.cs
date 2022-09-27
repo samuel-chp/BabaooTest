@@ -15,12 +15,12 @@ public class MainMenu : MonoBehaviour
 
     public void Play()
     {
-        GameManager.Instance.GoToGame();
+        GameManager.GoToGame();
     }
 
     public void Exit()
     {
-        GameManager.Instance.CloseGame();
+        GameManager.CloseGame();
     }
 
     public void PrintBestScore()

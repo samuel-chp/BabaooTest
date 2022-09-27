@@ -6,7 +6,6 @@ using UnityEngine.InputSystem;
 
 public class PlayerControls : MonoBehaviour
 {
-    [SerializeField] private PuzzleManager puzzleManager;
     [SerializeField] private Camera activeCamera;
 
     private PlayerPuzzleActions _actions;
@@ -37,18 +36,20 @@ public class PlayerControls : MonoBehaviour
             return cursorWorldPos;
         }
     }
+    
+    public PuzzleManager puzzleManager { get; set; }
 
     private void Awake()
     {
         _actions = new PlayerPuzzleActions();
     }
 
-    private void OnEnable()
+    public void EnableInputs()
     {
         _actions.Enable();
     }
-
-    private void OnDisable()
+    
+    public void DisableInputs()
     {
         _actions.Disable();
     }

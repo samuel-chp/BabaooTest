@@ -8,25 +8,22 @@ using UnityEngine.Events;
 public class Timer : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI textUI;
-    [SerializeField] private int maxTimeInSeconds = 180;
 
     public UnityEvent onTimerFinishCallback;
 
     private float _currentRemainingTime;
+    private bool _play;
 
+    public int maxTimeInSeconds { get; set; }
+    
     public int GetScore()
     {
         return maxTimeInSeconds - (int)_currentRemainingTime;
     }
 
-    private void Start()
-    {
-        _currentRemainingTime = maxTimeInSeconds;
-    }
-
     private void Update()
     {
-        if (_currentRemainingTime > 0f)
+        if (_currentRemainingTime > 0f && _play)
         {
             _currentRemainingTime -= Time.deltaTime;
             
@@ -54,5 +51,20 @@ public class Timer : MonoBehaviour
         }
         
         textUI.text = newText;
+    }
+
+    public void PauseTimer()
+    {
+        _play = false;
+    }
+
+    public void UnpauseTimer()
+    {
+        _play = true;
+    }
+
+    public void ResetTimer()
+    {
+        _currentRemainingTime = maxTimeInSeconds;
     }
 }

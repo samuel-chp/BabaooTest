@@ -5,40 +5,54 @@ using UnityEngine.Events;
 
 public class Board : MonoBehaviour
 {
-    [SerializeField] private Transform tilesHolder;
+    [SerializeField] private GameObject tilePrefab;
+    [SerializeField] protected Transform tilesHolder;
 
     [SerializeField] private Vector2 cellSize = Vector2.one;
     [SerializeField] private float step = 0f;
 
     // Private
-    private Tile[,] _tileMap = new Tile[3,3];
+    protected Tile[,] _tileMap = new Tile[3,3];
 
     // Properties
     public Tile[,] TileMap => _tileMap;
 
     /// <summary>
-    /// Add a tile to the board an position the tile according to its position.
+    /// Add a copy of the tile to the board an position the tile according to its position.
     /// </summary>
     /// <param name="tile"></param>
-    public void AddTile(Tile tile)
+    public virtual void AddTile(int tileIndex, Vector2Int tilePosition, Sprite tileSprite)
     {
-        if (_tileMap[tile.position.x, tile.position.y] != null)
+        if (_tileMap[tilePosition.x, tilePosition.y] != null)
         {
             Debug.LogError("Existing tile already in the given position.");
             return;
         }
+        
+        // Instantiate a new tile GO
+        GameObject tileGO = Instantiate(tilePrefab, transform.position, Quaternion.identity);
+        Tile tile = tileGO.GetComponent<Tile>();
 
+        // Copy the tile parameters
+        tile.transform.name = tileIndex.ToString();
+        tile.index = tileIndex;
+        tile.position = tilePosition;
+        tile.SetSprite(tileSprite);
+
+        // Position the tile
         _tileMap[tile.position.x, tile.position.y] = tile;
         tile.transform.SetParent(tilesHolder);
         tile.transform.localRotation = Quaternion.identity;
         SetTilePosition(tile, tile.position);
     }
 
-    public void RemoveTile(Tile tile)
+    public void RemoveTile(Vector2Int tilePosition)
     {
-        if (_tileMap[tile.position.x, tile.position.y] == tile)
+        if (_tileMap[tilePosition.x, tilePosition.y] != null)
         {
-            _tileMap[tile.position.x, tile.position.y] = null;
+            Tile tile = _tileMap[tilePosition.x, tilePosition.y];
+            _tileMap[tilePosition.x, tilePosition.y] = null;
+            Destroy(tile.gameObject);
         }
     }
 
@@ -58,8 +72,7 @@ public class Board : MonoBehaviour
         Tile[,] tileMap = board.TileMap;
         foreach (Tile tile in tileMap)
         {
-            Tile tileCopy = Instantiate(tile);
-            AddTile(tileCopy);
+            AddTile(tile.index, tile.position, tile.GetSprite());
         }
     }
 
@@ -126,5 +139,23 @@ public class Board : MonoBehaviour
         Vector2 localPos = tilesHolder.transform.InverseTransformPoint(worldPos);
         localPos.Scale(new Vector3(1/(cellSize.x + step/2), 1/(cellSize.y + step/2), 1f));
         return localPos;
+    }
+
+    public virtual void PlayWinAnimation()
+    {
+        Animator animator = GetComponent<Animator>();
+        if (animator != null)
+        {
+            animator.SetTrigger("Win");
+        }
+    }
+    
+    public virtual void PlayLoseAnimation()
+    {
+        Animator animator = GetComponent<Animator>();
+        if (animator != null)
+        {
+            animator.SetTrigger("Lose");
+        }
     }
 }
